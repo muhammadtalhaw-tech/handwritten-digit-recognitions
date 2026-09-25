@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>MNIST Digit Recognition</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            font-family: Arial, sans-serif;
+
+            background: #f2f2f2;
+
+            margin: 0;
+
+            padding: 30px;
+
+        }
+
+
+        h1 {
+
+            text-align: center;
+
+            color: #222;
+
+            margin-bottom: 35px;
+
+        }
+
+
+        .main-container {
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: flex-start;
+
+            gap: 30px;
+
+            flex-wrap: wrap;
+
+        }
+
+
+        .box {
+
+            background: white;
+
+            width: 430px;
+
+            padding: 25px;
+
+            border-radius: 15px;
+
+            box-shadow:
+                0 4px 15px
+                rgba(0, 0, 0, 0.15);
+
+            text-align: center;
+
+        }
+
+
+        .box h2 {
+
+            margin-top: 0;
+
+            color: #222;
+
+        }
+
+
+        .box p {
+
+            color: #555;
+
+        }
+
+
+        /* =================================================
+           MOUSE CANVAS
+           ================================================= */
+
+
+        #canvas {
+
+            display: block;
+
+            margin: 20px auto;
+
+            background: black;
+
+            border: 3px solid #333;
+
+            cursor: crosshair;
+
+            width: 280px;
+
+            height: 280px;
+
+        }
+
+
+        /* =================================================
+           BUTTONS
+           ================================================= */
+
+
+        button {
+
+            border: none;
+
+            border-radius: 8px;
+
+            padding: 12px 22px;
+
+            font-size: 16px;
+
+            cursor: pointer;
+
+            margin: 5px;
+
+        }
+
+
+        .predict-button {
+
+            background: green;
+
+            color: white;
+
+        }
+
+
+        .predict-button:hover {
+
+            background: darkgreen;
+
+        }
+
+
+        .clear-button {
+
+            background: red;
+
+            color: white;
+
+        }
+
+
+        .clear-button:hover {
+
+            background: darkred;
+
+        }
+
+
+        /* =================================================
+           RESULTS
+           ================================================= */
+
+
+        .result-box {
+
+            margin-top: 25px;
+
+            background: #eeeeee;
+
+            padding: 20px;
+
+            border-radius: 12px;
+
+        }
+
+
+        .result-box h3 {
+
+            margin-top: 0;
+
+        }
+
+
+        .model-result {
+
+            margin: 15px 0;
+
+            font-size: 18px;
+
+        }
+
+
+        .digit {
+
+            font-size: 35px;
+
+            font-weight: bold;
+
+            margin-left: 10px;
+
+        }
+
+
+        .confidence {
+
+            font-size: 14px;
+
+            color: #555;
+
+        }
+
+
+        /* =================================================
+           IMAGE UPLOAD
+           ================================================= */
+
+
+        input[type="file"] {
+
+            margin: 20px 0;
+
+            padding: 8px;
+
+            width: 100%;
+
+        }
+
+
+        .uploaded-image {
+
+            display: block;
+
+            width: 180px;
+
+            height: 180px;
+
+            object-fit: contain;
+
+            margin: 15px auto;
+
+            border: 2px solid #333;
+
+            background: white;
+
+        }
+
+
+        /* =================================================
+           ERROR
+           ================================================= */
+
+
+        .error {
+
+            background: #ffdede;
+
+            color: red;
+
+            padding: 12px;
+
+            border-radius: 8px;
+
+            margin-top: 15px;
+
+        }
+
+
+        /* =================================================
+           RESPONSIVE
+           ================================================= */
+
+
+        @media (max-width: 600px) {
+
+            body {
+
+                padding: 15px;
+
+            }
+
+
+            .box {
+
+                width: 100%;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<h1>
+    MNIST Handwritten Digit Recognition
+</h1>
+
+
+<div class="main-container">
+
+
+    <!-- ==================================================
+         MOUSE WRITE
+         ================================================== -->
+
+
+    <div class="box">
+
+        <h2>
+            ✍️ Write With Mouse
+        </h2>
+
+
+        <p>
+            Mouse se koi digit likhein
+        </p>
+
+
+        <canvas
+            id="canvas"
+            width="280"
+            height="280">
+        </canvas>
+
+
+        <div>
+
+            <button
+                class="predict-button"
+                onclick="predictMouse()">
+
+                Predict Mouse Digit
+
+            </button>
+
+
+            <button
+                class="clear-button"
+                onclick="clearCanvas()">
+
+                Clear
+
+            </button>
+
+        </div>
+
+
+        <!-- Mouse Results -->
+
+        <div class="result-box">
+
+            <h3>
+                Mouse Results
+            </h3>
+
+
+            <div class="model-result">
+
+                Model 1:
+
+                <span
+                    id="mouseModel1"
+                    class="digit">
+
+                    -
+
+                </span>
+
+
+                <div
+                    id="mouseConfidence1"
+                    class="confidence">
+
+                </div>
+
+            </div>
+
+
+            <div class="model-result">
+
+                Model 2:
+
+                <span
+                    id="mouseModel2"
+                    class="digit">
+
+                    -
+
+                </span>
+
+
+                <div
+                    id="mouseConfidence2"
+                    class="confidence">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ==================================================
+         IMAGE UPLOAD
+         ================================================== -->
+
+
+    <div class="box">
+
+        <h2>
+            🖼️ Upload Image
+        </h2>
+
+
+        <p>
+            Computer se digit ki image upload karein
+        </p>
+
+
+        <form
+            action="/predict_image"
+            method="POST"
+            enctype="multipart/form-data">
+
+
+            <input
+                type="file"
+                name="image"
+                accept="image/*"
+                required>
+
+
+            <br>
+
+
+            <button
+                type="submit"
+                class="predict-button">
+
+                Predict Image Digit
+
+            </button>
+
+
+        </form>
+
+
+        <!-- Uploaded Image -->
+
+        {% if uploaded_image %}
+
+            <h3>
+                Uploaded Image
+            </h3>
+
+
+            <img
+                src="{{ uploaded_image }}"
+                class="uploaded-image"
+                alt="Uploaded Digit">
+
+        {% endif %}
+
+
+
+        <!-- Image Results -->
+
+        <div class="result-box">
+
+            <h3>
+                Image Results
+            </h3>
+
+
+            <div class="model-result">
+
+                Model 1:
+
+                <span class="digit">
+
+                    {% if image_prediction1 is not none %}
+
+                        {{ image_prediction1 }}
+
+                    {% else %}
+
+                        -
+
+                    {% endif %}
+
+                </span>
+
+
+                {% if image_confidence1 is defined %}
+
+                    <div class="confidence">
+
+                        Confidence:
+                        {{ image_confidence1 }}%
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+
+            <div class="model-result">
+
+                Model 2:
+
+                <span class="digit">
+
+                    {% if image_prediction2 is not none %}
+
+                        {{ image_prediction2 }}
+
+                    {% else %}
+
+                        -
+
+                    {% endif %}
+
+                </span>
+
+
+                {% if image_confidence2 is defined %}
+
+                    <div class="confidence">
+
+                        Confidence:
+                        {{ image_confidence2 }}%
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        {% if error %}
+
+            <div class="error">
+
+                Error:
+                {{ error }}
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+</div>
+
+
+
+<script>
+
+
+    // ======================================================
+    // CANVAS SETUP
+    // ======================================================
+
+
+    const canvas =
+        document.getElementById("canvas");
+
+
+    const ctx =
+        canvas.getContext("2d");
+
+
+    // Black background
+
+    ctx.fillStyle = "black";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    // White drawing
+
+    ctx.strokeStyle = "white";
+
+    ctx.lineWidth = 15;
+
+    ctx.lineCap = "round";
+
+    ctx.lineJoin = "round";
+
+
+    let drawing = false;
+
+
+
+    // ======================================================
+    // MOUSE DOWN
+    // ======================================================
+
+
+    canvas.addEventListener(
+        "mousedown",
+        function(event) {
+
+            drawing = true;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                event.offsetX,
+                event.offsetY
+            );
+
+        }
+    );
+
+
+
+    // ======================================================
+    // MOUSE MOVE
+    // ======================================================
+
+
+    canvas.addEventListener(
+        "mousemove",
+        function(event) {
+
+            if (!drawing) {
+
+                return;
+
+            }
+
+
+            ctx.lineTo(
+                event.offsetX,
+                event.offsetY
+            );
+
+
+            ctx.stroke();
+
+        }
+    );
+
+
+
+    // ======================================================
+    // MOUSE UP
+    // ======================================================
+
+
+    canvas.addEventListener(
+        "mouseup",
+        function() {
+
+            drawing = false;
+
+        }
+    );
+
+
+
+    canvas.addEventListener(
+        "mouseleave",
+        function() {
+
+            drawing = false;
+
+        }
+    );
+
+
+
+    // ======================================================
+    // CLEAR CANVAS
+    // ======================================================
+
+
+    function clearCanvas() {
+
+
+        ctx.fillStyle = "black";
+
+
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        document.getElementById(
+            "mouseModel1"
+        ).innerText = "-";
+
+
+        document.getElementById(
+            "mouseModel2"
+        ).innerText = "-";
+
+
+        document.getElementById(
+            "mouseConfidence1"
+        ).innerText = "";
+
+
+        document.getElementById(
+            "mouseConfidence2"
+        ).innerText = "";
+
+    }
+
+
+
+    // ======================================================
+    // PREDICT MOUSE DIGIT
+    // ======================================================
+
+
+    async function predictMouse() {
+
+
+        try {
+
+
+            // Get canvas image
+
+            const image =
+                canvas.toDataURL("image/png");
+
+
+            // Send to Flask
+
+            const response =
+                await fetch(
+                    "/predict_mouse",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body: JSON.stringify({
+
+                            image: image
+
+                        })
+
+                    }
+                );
+
+
+            // Get result
+
+            const result =
+                await response.json();
+
+
+
+            // Check error
+
+            if (!result.success) {
+
+                alert(
+                    "Error: " +
+                    result.error
+                );
+
+                return;
+
+            }
+
+
+
+            // =================================================
+            // SHOW MODEL 1
+            // =================================================
+
+
+            document.getElementById(
+                "mouseModel1"
+            ).innerText =
+                result.model1;
+
+
+            document.getElementById(
+                "mouseConfidence1"
+            ).innerText =
+                "Confidence: " +
+                result.confidence1 +
+                "%";
+
+
+
+            // =================================================
+            // SHOW MODEL 2
+            // =================================================
+
+
+            document.getElementById(
+                "mouseModel2"
+            ).innerText =
+                result.model2;
+
+
+            document.getElementById(
+                "mouseConfidence2"
+            ).innerText =
+                "Confidence: " +
+                result.confidence2 +
+                "%";
+
+
+        }
+
+        catch (error) {
+
+
+            alert(
+                "Something went wrong: " +
+                error
+            );
+
+        }
+
+    }
+
+
+</script>
+
+
+</body>
+
+</html>
